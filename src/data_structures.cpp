@@ -1,5 +1,6 @@
 #include <vector>
 #include <cassert>
+#include <cmath>
 
 #include "data_structures.hpp"
 
@@ -131,13 +132,13 @@ bool polygon_t::are_non_collinear_segments_intersects_in_plane(const point_t& p1
 //ХУЙНЯ - looks copypasting
     if (are_equal(a11 * a22 - a21 * a12, 0)) {
         solve_2x2_equation(a21, a22, a31, a32, b2, b3, &t1, &t2);
-        if (t1 == NAN || t2 == NAN) {
+        if (std::isnan(t1) || std::isnan(t2)) {
             return false;
         }
     }
     else {
         solve_2x2_equation(a11, a12, a21, a22, b1, b2, &t1, &t2);
-        if (t1 == NAN || t2 == NAN) {
+        if (std::isnan(t1) || std::isnan(t2)) {
             return false;
         }
     }
