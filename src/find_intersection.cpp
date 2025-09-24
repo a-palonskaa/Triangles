@@ -44,4 +44,6 @@ int main() {
     }
 
     for (auto pos : intersected) {
-        std::cout << pos 
+        std::cout << pos << '\n';
+    }
+}
