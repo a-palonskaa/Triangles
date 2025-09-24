@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <cassert>
+#include <cmath>
 
 inline constexpr double tolerance = 0.00001;
 
