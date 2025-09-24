@@ -9,4 +9,16 @@ set(SRC_DIR ./src)
 set(TEST_DIR ./test)
 
 add_executable(find ${SRC_DIR}/data_structures.cpp ${SRC_DIR}/find_intersection.cpp)
-targ
+target_include_directories(find PRIVATE ${INCLUDE_DIR})
+
+include(FetchContent)
+FetchContent_Declare(
+    googletest
+    URL https://github.com/google/googletest/archive/refs/tags/release-1.12.1.tar.gz
+)
+
+FetchContent_MakeAvailable(googletest)
+
+add_executable(run_tests ${TEST_DIR}/gtests.cpp)
+target_include_directories(run_tests PRIVATE ${INCLUDE_DIR})
+target_link_libraries(run_tests PRIVATE GTest::gtest_main)
