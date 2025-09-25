@@ -4,42 +4,6 @@
 
 #include "data_structures.hpp"
 
-static bool point_on_segment(const point_t& refp, const point_t& p1, const point_t& p2) {
-    double t = 0;
-    double a11 = p2.x - p1.x, a21 = p2.y - p1.y, a31 = p2.z - p1.z;
-    double b1 = refp.x - p1.x, b2 = refp.y - p1.y, b3 = refp.y - p1.y;
-
-    if (!are_equal(a11 * b2, a21 * b1) && are_equal(a21 * b3, a31 * b2)) {
-        return false;
-    }
-    else {
-        if (!are_equal(a11, 0)) {
-            t = b1 / a11;
-        }
-        else if (!are_equal(a21, 0)) {
-            t = b2 / a21;
-        }
-        else {
-            t = b3 / a31;
-        }
-    }
-    return (t > -tolerance && t < 1 + tolerance);
-}
-
-static void solve_2x2_equation(const double& a11, const double& a12, const double& a21, const double& a22,
-                        const double& b1,  const double& b2, double* t1, double* t2) {
-    double det1 = a11 * a22 - a12 * a21;
-    if (are_equal(det1, 0)) {
-        *t1 = NAN;
-        *t2 = NAN;
-    }
-    double det2 = b1 * a22 - b2 * a12;
-    double det3 = a11 * b2 - a21 * b1;
-
-    *t1 = det2 / det1;
-    *t2 = det3 / det1;
-}
-
 //----------------polygon_t-methods--------------------------------------------------------------
 
 bool polygon_t::are_intersecting(const polygon_t& ref_polygon) const {
@@ -88,7 +52,7 @@ bool polygon_t::is_inside(const point_t& refp) const {
     double d21 = v2.x * v1.x + v2.y * v1.y + v2.z * v1.z;
 
     double d = d00 * d11 - d01 * d01;
-    if (are_equal(d, 0)) { //ХУЙНЯ - maybe create is_null for doubles
+    if (is_null(d)) {
         return false;
     }
 
@@ -130,7 +94,7 @@ bool polygon_t::are_non_collinear_segments_intersects_in_plane(const point_t& p1
     double a31 = p2.z - p1.z, a32 = q1.z - q2.z, b3 = q1.z - p1.z;
 
 //ХУЙНЯ - looks copypasting
-    if (are_equal(a11 * a22 - a21 * a12, 0)) {
+    if (is_null(a11 * a22 - a21 * a12)) {
         solve_2x2_equation(a21, a22, a31, a32, b2, b3, &t1, &t2);
         if (std::isnan(t1) || std::isnan(t2)) {
             return false;

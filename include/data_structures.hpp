@@ -11,6 +11,10 @@ inline bool are_equal(double n1, double n2) {
     return std::abs(n1 - n2) < tolerance;
 }
 
+inline bool is_null(double n1) {
+    return std::abs(n1) < tolerance;
+}
+
 namespace point_plane_relation {
     enum type {
         ABOVE_PLANE = 0,
@@ -35,6 +39,43 @@ struct point_t {
                (std::abs(z - refp.z) < tolerance);
     }
 };
+
+inline bool point_on_segment(const point_t& refp, const point_t& p1, const point_t& p2) {
+    double t = 0;
+    double a11 = p2.x - p1.x, a21 = p2.y - p1.y, a31 = p2.z - p1.z;
+    double b1 = refp.x - p1.x, b2 = refp.y - p1.y, b3 = refp.y - p1.y;
+
+    if (!are_equal(a11 * b2, a21 * b1) && are_equal(a21 * b3, a31 * b2)) {
+        return false;
+    }
+    else {
+        if (!are_equal(a11, 0)) {
+            t = b1 / a11;
+        }
+        else if (!are_equal(a21, 0)) {
+            t = b2 / a21;
+        }
+        else {
+            t = b3 / a31;
+        }
+    }
+    return (t > -tolerance && t < 1 + tolerance);
+}
+
+inline void solve_2x2_equation(const double& a11, const double& a12, const double& a21, const double& a22,
+                        const double& b1,  const double& b2, double* t1, double* t2) {
+    double det1 = a11 * a22 - a12 * a21;
+    if (is_null(det1)) {
+        *t1 = NAN;
+        *t2 = NAN;
+        return;
+    }
+    double det2 = b1 * a22 - b2 * a12;
+    double det3 = a11 * b2 - a21 * b1;
+
+    *t1 = det2 / det1;
+    *t2 = det3 / det1;
+}
 
 inline double dot(const point_t& u, const point_t& v) {
     return u.x * v.x + u.y * v.y + u.z * v.z;

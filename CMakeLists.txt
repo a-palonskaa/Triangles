@@ -19,6 +19,6 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(googletest)
 
-add_executable(run_tests ${TEST_DIR}/gtests.cpp)
+add_executable(run_tests ${TEST_DIR}/gtests.cpp ${SRC_DIR}/data_structures.cpp )
 target_include_directories(run_tests PRIVATE ${INCLUDE_DIR})
 target_link_libraries(run_tests PRIVATE GTest::gtest_main)
