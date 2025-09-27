@@ -1,21 +1,22 @@
 #include <iostream>
 #include <set>
 #include <cmath>
+#include <array>
 
 #include "data_structures.hpp"
 
-polygon_t read_triangle() {
-    std::vector<point_t> points(3);
+triangle_t read_triangle() {
+    std::array<point_t, 3> points;
     point_t point{};
     for (size_t i = 0; i < 3; i++) {
         std::cin >> point.x >> point.y >> point.z;
         if (!std::cin.good()) {
             std::cerr << "failed to read elem from cin\n";
-            return polygon_t{{}};
+            return triangle_t{{}};
         }
         points[i] = point;
     }
-    return polygon_t{points};
+    return triangle_t{points};
 }
 
 int main() {
@@ -27,7 +28,7 @@ int main() {
         return EXIT_FAILURE;
     }
 
-    std::vector<polygon_t> triangles;
+    std::vector<triangle_t> triangles;
     triangles.reserve(triangles_amount);
     for (size_t i = 0; i < triangles_amount; i++) {
         triangles.push_back(read_triangle());

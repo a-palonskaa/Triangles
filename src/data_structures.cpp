@@ -1,30 +1,33 @@
 #include <vector>
 #include <cassert>
 #include <cmath>
+#include <array>
 
 #include "data_structures.hpp"
 
-//----------------polygon_t-methods--------------------------------------------------------------
+//----------------triangle_t-methods--------------------------------------------------------------
 
-bool polygon_t::are_intersecting(const polygon_t& ref_polygon) const {
-    assert(vertices.size() == 3); //ХУЙНЯ - production??
+bool triangle_t::are_intersecting(const triangle_t& ref_triangle) const {
     plane_t plane1(vertices[0], vertices[1], vertices[2]);
 
-    std::vector<point_plane_relation::type> vals; //ХУЙНЯ - shitty naming
-    for (const auto& v : ref_polygon.vertices) {
-        vals.push_back(plane1.classify_point_location(v));
+    point_plane_relation::type point_rels[3];
+    for (size_t i = 0; i < 3; i++) {
+        point_rels[i] = plane1.classify_point_location(ref_triangle.vertices[i]);
     }
-//ХУЙНЯ - too much, non-readable
-//ХУЙНЯ - iteration by vals  - change to size_ or smth
-    for (size_t i = 0, j = 1; i < 2; i++, j = (i + 1) % 3) {
-        if (vals[i] == point_plane_relation::ON_PLANE && is_inside(ref_polygon.vertices[i])) {
+
+    for (size_t i = 0, j = 1; i < size_ - 1; i++, j = (i + 1) % size_) {
+        if (is_inside(point_rels[i], ref_triangle.vertices[i])) {
             return true;
-        } else if ((vals[i] == point_plane_relation::ON_PLANE && vals[j] == point_plane_relation::ON_PLANE) &&
-            is_plane_line_intersection(ref_polygon.vertices[i], ref_polygon.vertices[j])) {
+        }
+
+        if (is_plane_line_intersection(point_rels[i], point_rels[j],
+            ref_triangle.vertices[i], ref_triangle.vertices[j])) {
             return true;
-        } else if (((vals[i] == point_plane_relation::ABOVE_PLANE && vals[j] == point_plane_relation::BELOW_PLANE ||
-            vals[i] == point_plane_relation::BELOW_PLANE && vals[j] == point_plane_relation::ABOVE_PLANE)) &&
-            is_inside(plane1.find_cross_line_intersection_point(ref_polygon.vertices[i], ref_polygon.vertices[j]))) {
+        }
+
+        point_t intersection = plane1.find_cross_line_intersection_point(point_rels[i], point_rels[j],
+            ref_triangle.vertices[i], ref_triangle.vertices[j]);
+        if (is_inside(point_plane_relation::ON_PLANE, intersection)){
             return true;
         }
     }
@@ -32,8 +35,10 @@ bool polygon_t::are_intersecting(const polygon_t& ref_polygon) const {
 }
 
 // point in on polygon plane, barycentric coordinates
-bool polygon_t::is_inside(const point_t& refp) const {
-    assert(vertices.size() == 3); //ХУЙНЯ - shit
+bool triangle_t::is_inside(const point_plane_relation::type& rel, const point_t& refp) const {
+    if (rel != point_plane_relation::ON_PLANE) {
+        return false;
+    }
 
     if (!refp.is_valid()) {
         return false;
@@ -64,49 +69,43 @@ bool polygon_t::is_inside(const point_t& refp) const {
 }
 
 // line in on polygon plane, no dots inside triangle
-bool polygon_t::is_plane_line_intersection(const point_t& p1, const point_t& p2) const {
+bool triangle_t::is_plane_line_intersection(const point_plane_relation::type& rel1,
+    const point_plane_relation::type& rel2, const point_t& p1, const point_t& p2) const {
+    if (rel1 != point_plane_relation::ON_PLANE || rel2 != point_plane_relation::ON_PLANE) {
+        return false;
+    }
+
     return (segments_intersect_in_plane(p1, p2, vertices[0], vertices[1]) ||
             segments_intersect_in_plane(p1, p2, vertices[1], vertices[2]) ||
             segments_intersect_in_plane(p1, p2, vertices[2], vertices[0]));
 }
 
 // Check if two segments in the same plane intersect
-bool polygon_t::segments_intersect_in_plane(const point_t& p1, const point_t& p2,
+bool triangle_t::segments_intersect_in_plane(const point_t& p1, const point_t& p2,
                                 const point_t& q1, const point_t& q2) const {
     point_t dir1 = {p2.x - p1.x, p2.y - p1.y, p2.z - p1.z};
     point_t dir2 = {q2.x - q1.x, q2.y - q1.y, q2.z - q1.z};
     point_t cross_prod = cross(dir1, dir2);
 
     if (cross_prod.equal({0, 0, 0})) {
-        return point_on_segment(q1, p1, p2) || point_on_segment(q2, p1, p2) ||
-               point_on_segment(p1, q1, q2) || point_on_segment(p2, q1, q2);
+        return q1.is_point_on_segment(p1, p2) || q2.is_point_on_segment(p1, p2) ||
+               p1.is_point_on_segment(q1, q2) || p2.is_point_on_segment(q1, q2);
     }
-    return are_non_collinear_segments_intersects_in_plane(p1, p2, q1, q2);
+    return are_non_collinear_segments_intersects(p1, p2, q1, q2);
 }
 
-//ХУЙНЯ - damn long name i am tiref of reading
 // Check if two non collinear segments in the same plane intersect
-bool polygon_t::are_non_collinear_segments_intersects_in_plane(const point_t& p1, const point_t& p2,
+bool triangle_t::are_non_collinear_segments_intersects(const point_t& p1, const point_t& p2,
                                                     const point_t& q1, const point_t& q2) const {
     double t1 = 0, t2 = 0;
     double a11 = p2.x - p1.x, a12 = q1.x - q2.x, b1 = q1.x - p1.x;
     double a21 = p2.y - p1.y, a22 = q1.y - q2.y, b2 = q1.y - p1.y;
     double a31 = p2.z - p1.z, a32 = q1.z - q2.z, b3 = q1.z - p1.z;
 
-//ХУЙНЯ - looks copypasting
-    if (is_null(a11 * a22 - a21 * a12)) {
-        solve_2x2_equation(a21, a22, a31, a32, b2, b3, &t1, &t2);
-        if (std::isnan(t1) || std::isnan(t2)) {
-            return false;
-        }
+    solve_appropriate_2x2(a11, a12, a21, a22, a31, a32, b1, b2, b3, &t1, &t2);
+    if (std::isnan(t1) || std::isnan(t2)) {
+        return false;
     }
-    else {
-        solve_2x2_equation(a11, a12, a21, a22, b1, b2, &t1, &t2);
-        if (std::isnan(t1) || std::isnan(t2)) {
-            return false;
-        }
-    }
-
     return (t1 > -tolerance && t1 < 1 + tolerance && t2 > -tolerance && t2 < 1 + tolerance);
 }
 
@@ -127,7 +126,13 @@ point_plane_relation::type plane_t::classify_point_location(const point_t& p) co
 }
 
 // line cross the plane and it is known for sure
-point_t plane_t::find_cross_line_intersection_point(const point_t& p1, const point_t& p2) const {
+point_t plane_t::find_cross_line_intersection_point(const point_plane_relation::type& rel1,
+const point_plane_relation::type& rel2, const point_t& p1, const point_t& p2) const {
+    if (!(rel1 == point_plane_relation::ABOVE_PLANE && rel2 == point_plane_relation::BELOW_PLANE ||
+        rel1 == point_plane_relation::BELOW_PLANE && rel2 == point_plane_relation::ABOVE_PLANE)) {
+        return point_t{NAN, NAN, NAN};
+    }
+
     point_t v12{p2.x - p1.x, p2.y - p1.y, p2.z - p1.z}; // directional vector of a line  l = v12t + p1
     double t = -(a * p1.x + b * p1.y + c * p1.z + d) / (a * v12.x + b * v12.y + c * v12.z); // t correcponding to intersection
 

@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <array>
 #include <cmath>
 
 #include <gtest/gtest.h>
@@ -48,7 +49,7 @@ TEST(PointOnSegment, PointOnSegment) {
     };
 
     for (const auto& data : test_cases) {
-        EXPECT_TRUE(point_on_segment(data.refp, data.p1, data.p2) == data.present);
+        EXPECT_TRUE(data.refp.is_point_on_segment(data.p1, data.p2) == data.present);
     }
 }
 
@@ -74,24 +75,22 @@ TEST(Solve2x2Equation, Solve2x2Equation) {
     }
 }
 
-TEST(PolygonT, isInside) {
-    struct PolygonIsInsideTestData {
-        std::vector<point_t> v;
+TEST(TrianglenT, isInside) {
+    struct TriangleIsInsideTestData {
+        std::array<point_t, 3> v;
         point_t refp;
         bool is_inside;
     };
 
-    PolygonIsInsideTestData test_cases[] = {
-        {std::vector<point_t>{{0, 0, 0}, {1, 0, 0}, {0, 1, 0}}, {0.5, 0.5, 0}, true},
-        {std::vector<point_t>{{0, 0, 0}, {1, 0, 0}, {0, 1, 0}}, {1.5, 0.5, 0}, false},
+    TriangleIsInsideTestData test_cases[] = {
+        {std::array<point_t, 3>{{{0, 0, 0}, {1, 0, 0}, {0, 1, 0}}}, {0.5, 0.5, 0}, true},
+        {std::array<point_t, 3>{{{0, 0, 0}, {1, 0, 0}, {0, 1, 0}}}, {1.5, 0.5, 0}, false},
     };
 
     for (const auto& data : test_cases) {
-        polygon_t polygon{data.v};
-        EXPECT_TRUE(polygon.is_inside(data.refp) == data.is_inside);
+        triangle_t triangle{data.v};
+        EXPECT_TRUE(triangle.is_inside(point_plane_relation::ON_PLANE, data.refp) == data.is_inside);
     }
-
-
 }
 
 int main(int argc, char** argv) {
